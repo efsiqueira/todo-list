@@ -2,6 +2,7 @@ import useLocalStorage from "use-local-storage"
 import { TASKS_KEY, TaskState, type Task } from "../models/task"
 import { delay } from "../helpers/utils"
 import { useState } from "react"
+import type { DropResult } from "@hello-pangea/dnd"
 
 export const useTask = () => {
   const [tasks, setTasks] = useLocalStorage<Task[]>(TASKS_KEY, [])
@@ -48,7 +49,24 @@ export const useTask = () => {
     setIsDeletingTask(false)
   }
 
+  const reorder: <T>(list: T[], startIndex: number, endIndex: number) => T[] = (list, startIndex, endIndex) => {
+    const result = Array.from(list)
+    const [removed] = result.splice(startIndex, 1)
+    result.splice(endIndex, 0, removed)
+
+    return result
+  };
+
+  const onDragEnd = (result: DropResult) => {
+    if (!result.destination) return
+
+    const items = reorder(tasks, result.source.index, result.destination.index)
+
+    setTasks(items)
+  }
+
   return {
+    onDragEnd,
     updateTask,
     deleteTask,
     prepareTask,

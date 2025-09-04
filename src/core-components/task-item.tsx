@@ -12,13 +12,15 @@ import { TaskState, type Task } from "../models/task"
 import { cx } from "class-variance-authority"
 import { useTask } from "../hooks/use-task"
 import { Skeleton } from "../components/skeleton"
+import { Draggable } from "@hello-pangea/dnd"
 
 interface TaskItemProps {
   task: Task,
+  index: number,
   loading?: boolean
 }
 
-export const TaskItem = ({ task, loading }: TaskItemProps) => {
+export const TaskItem = ({ task, index, loading }: TaskItemProps) => {
   const [isEditing, setIsEditing] = useState<boolean>(task?.state === TaskState.Creating)
   const [taskTitle, setTaskTitle] = useState<string>(task.title || "")
   const { updateTask, deleteTask, isUpdatingTask, isDeletingTask, updateTaskStatus } = useTask()
@@ -58,63 +60,75 @@ export const TaskItem = ({ task, loading }: TaskItemProps) => {
   }
 
   return (
-    <Card size="md" >
-      {!isEditing ? (
-        <div className="flex items-center gap-4">
-          <InputCheckbox
-            checked={task?.concluded}
-            onChange={handleChangeTaskStatus}
-            loading={loading}
-          />
-          {!loading ? <Text
-            className={cx("flex-1", {
-              "line-through": task?.concluded
-            })}
-          >
-            {task?.title}
-          </Text> : <Skeleton className="flex-1 h-6" />
-          }
-          <div className="flex gap-1">
-            <ButtonIcon
-              icon={TrashIcon}
-              loading={loading}
-              variant="tertiary"
-              handling={isDeletingTask}
-              onClick={handleDeleteTask}
-            />
-            <ButtonIcon
-              icon={PencilIcon}
-              loading={loading}
-              variant="tertiary"
-              onClick={handleEditTask}
-            />
-          </div>
-        </div>
-      ) : (
-        <form onSubmit={handleSaveTask} className="flex items-center gap-4">
-          <InputText
-            required
-            autoFocus
-            value={taskTitle}
-            className="flex-1"
-            onChange={handleChangeTaskTitle}
-          />
-          <div className="flex gap-1">
-            <ButtonIcon
-              type="button"
-              icon={XIcon}
-              variant="secondary"
-              onClick={handleCancelEditTask}
-            />
-            <ButtonIcon
-              type="submit"
-              icon={CheckIcon}
-              variant="primary"
-              handling={isUpdatingTask}
-            />
-          </div>
-        </form>
+    <Draggable
+      index={index}
+      draggableId={task.id}
+    >
+      {(provided) => (
+        <Card
+          size="md"
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+        >
+          {!isEditing ? (
+            <div className="flex items-center gap-4">
+              <InputCheckbox
+                checked={task?.concluded}
+                onChange={handleChangeTaskStatus}
+                loading={loading}
+              />
+              {!loading ? <Text
+                className={cx("flex-1", {
+                  "line-through": task?.concluded
+                })}
+              >
+                {task?.title}
+              </Text> : <Skeleton className="flex-1 h-6" />
+              }
+              <div className="flex gap-1">
+                <ButtonIcon
+                  icon={TrashIcon}
+                  loading={loading}
+                  variant="tertiary"
+                  handling={isDeletingTask}
+                  onClick={handleDeleteTask}
+                />
+                <ButtonIcon
+                  icon={PencilIcon}
+                  loading={loading}
+                  variant="tertiary"
+                  onClick={handleEditTask}
+                />
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleSaveTask} className="flex items-center gap-4">
+              <InputText
+                required
+                autoFocus
+                value={taskTitle}
+                className="flex-1"
+                onChange={handleChangeTaskTitle}
+              />
+              <div className="flex gap-1">
+                <ButtonIcon
+                  type="button"
+                  icon={XIcon}
+                  variant="secondary"
+                  onClick={handleCancelEditTask}
+                />
+                <ButtonIcon
+                  type="submit"
+                  icon={CheckIcon}
+                  variant="primary"
+                  handling={isUpdatingTask}
+                />
+              </div>
+            </form>
+          )}
+        </Card>
       )}
-    </Card>
+    </Draggable>
   )
 }
